@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
+public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
     private static final Logger log = getLogger(BaseHttpPutResilience4jCommand.class);
     protected HttpClient client;
     private HttpRequest httpRequest;
@@ -56,7 +56,7 @@ public class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
-                .GET()
+                .PUT(HttpRequest.BodyPublishers.ofString(getBodyAsString()))
                 .build();
         decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
             try {
@@ -83,4 +83,6 @@ public class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
     protected String buildAuthorization() {
         return "";
     }
+
+    abstract String getBodyAsString();
 }
