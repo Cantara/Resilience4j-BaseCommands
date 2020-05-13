@@ -6,7 +6,7 @@
 
   <groupId>no.cantara.base</groupId>
   <artifactId>Resilience4j-BaseCommands</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.1-SNAPSHOT</version>
 
   <name>Resilience4j-BaseCommands</name>
 
