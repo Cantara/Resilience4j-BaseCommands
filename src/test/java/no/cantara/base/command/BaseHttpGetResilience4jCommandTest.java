@@ -1,16 +1,26 @@
-package no.cantara.base.commands;
+package no.cantara.base.command;
 
 import com.xebialabs.restito.server.StubServer;
 import io.restassured.RestAssured;
 import no.cantara.base.command.BaseHttpPostResilience4jCommand;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.util.HttpStatus;
 import org.junit.Before;
+import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 
+import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp;
+import static com.xebialabs.restito.builder.verify.VerifyHttp.verifyHttp;
+import static com.xebialabs.restito.semantics.Action.status;
+import static com.xebialabs.restito.semantics.Condition.*;
+import static io.restassured.RestAssured.expect;
 
-public class BaseHttpPutResilience4jCommandTest {
+
+public class BaseHttpGetResilience4jCommandTest {
     private StubServer server;
-    private BaseHttpPostResilience4jCommand baseHttpPostResilience4jCommand;
+    private BaseHttpGetResilience4jCommand baseHttpGetResilience4jCommand;
     private int port;
     private URI uri;
 
@@ -21,6 +31,23 @@ public class BaseHttpPutResilience4jCommandTest {
         this.port = server.getPort();
         uri = URI.create("http://localhost:" + port );
 
+    }
+
+    @Test
+    public void shouldPassVerification() throws UnsupportedEncodingException {
+        // Restito
+        whenHttp(server).
+                match(get("/demo")).
+                then(status(HttpStatus.OK_200));
+
+        // Rest-assured
+        expect().statusCode(200).when().get("/demo");
+
+        // Restito
+        verifyHttp(server).once(
+                method(Method.GET),
+                uri("/demo")
+        );
     }
 
     /*
