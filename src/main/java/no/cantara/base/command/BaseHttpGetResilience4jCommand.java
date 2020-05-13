@@ -24,10 +24,20 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
     private CircuitBreaker circuitBreaker;
     private URI baseUri;
 
+    /**
+     *
+     * @param baseUri URI to run get from
+     * @param groupKey group your commands into logical enteties for monitoring
+     */
     protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey) {
         this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT);
     }
 
+    /**
+     * @param baseUri URI to run get from
+     * @param groupKey group your commands into logical enteties for monitoring
+     * @param timeout timeout in milliseconds.
+     */
     protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey, int timeout) {
         super(baseUri, groupKey, timeout);
         client = HttpClient.newBuilder().build();
