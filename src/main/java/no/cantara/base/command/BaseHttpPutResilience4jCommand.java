@@ -16,19 +16,19 @@ import java.util.function.Function;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class BaseHttpPutResilienc4jCommand extends BaseHttpCommand {
-    private static final Logger log = getLogger(BaseHttpPutResilienc4jCommand.class);
+public class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
+    private static final Logger log = getLogger(BaseHttpPutResilience4jCommand.class);
     protected HttpClient client;
     private HttpRequest httpRequest;
     private Function<HttpRequest, HttpResponse> decorated;
     private CircuitBreaker circuitBreaker;
     private URI baseUri;
 
-    protected BaseHttpPutResilienc4jCommand(URI baseUri, String groupKey) {
+    protected BaseHttpPutResilience4jCommand(URI baseUri, String groupKey) {
         this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT);
     }
 
-    protected BaseHttpPutResilienc4jCommand(URI baseUri, String groupKey, int timeout) {
+    protected BaseHttpPutResilience4jCommand(URI baseUri, String groupKey, int timeout) {
         super(baseUri, groupKey, timeout);
         client = HttpClient.newBuilder().build();
         initializeCircuitBreaker();
