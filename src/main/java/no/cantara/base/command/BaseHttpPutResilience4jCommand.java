@@ -23,6 +23,7 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
     private Function<HttpRequest, HttpResponse> decorated;
     private CircuitBreaker circuitBreaker;
     private URI baseUri;
+    private HttpResponse<String> response = null;
 
     protected BaseHttpPutResilience4jCommand(URI baseUri, String groupKey) {
         this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT);
@@ -43,20 +44,36 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
 
     //https://www.baeldung.com/java-9-http-client
     //https://gssachdeva.wordpress.com/2015/09/02/java-8-lambda-expression-for-design-patterns-command-design-pattern/
-    public String getAsJson() {
+    public String getBodyAsJson() {
         String json = null;
-        HttpResponse<String> response = run();
+        if (response == null) {
+            response = run();
+        }
         json = response.body();
         return json;
+    }
+
+    /**
+     * When you expect eg. 204
+     * @return http status only
+     */
+    public int getHttpStatus() {
+        int statusCode = -1;
+        if (response == null) {
+            response = run();
+        }
+        statusCode = response.statusCode();
+        return statusCode;
     }
 
     //Should we impose String body on HttpCommands?
     @Override
     protected HttpResponse<String> run() {
+        String body = getBodyAsString();
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
-                .PUT(HttpRequest.BodyPublishers.ofString(getBodyAsString()))
+                .PUT(HttpRequest.BodyPublishers.ofString(body))
                 .build();
         decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
             try {
@@ -70,7 +87,6 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
         });
 
         HttpResponse<String> response = decorated.apply(httpRequest);
-
         return response;
     }
 
@@ -84,5 +100,5 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
         return "";
     }
 
-    abstract String getBodyAsString();
+    protected abstract String getBodyAsString();
 }
