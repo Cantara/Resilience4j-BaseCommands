@@ -45,25 +45,34 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseHttpCommand {
     //https://www.baeldung.com/java-9-http-client
     //https://gssachdeva.wordpress.com/2015/09/02/java-8-lambda-expression-for-design-patterns-command-design-pattern/
     public String getBodyAsJson() {
+        if (isMocked) {
+            return mockedResponseData;
+        }
         String json = null;
         if (response == null) {
             response = run();
         }
         json = response.body();
+
         return json;
     }
 
     /**
      * When you expect eg. 204
+     *
      * @return http status only
      */
     public int getHttpStatus() {
-        int statusCode = -1;
-        if (response == null) {
-            response = run();
+        if (isMocked) {
+            return mockedStatusCode;
+        } else {
+            int statusCode = -1;
+            if (response == null) {
+                response = run();
+            }
+            statusCode = response.statusCode();
+            return statusCode;
         }
-        statusCode = response.statusCode();
-        return statusCode;
     }
 
     //Should we impose String body on HttpCommands?

@@ -23,10 +23,10 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
     private Function<HttpRequest, HttpResponse> decorated;
     private CircuitBreaker circuitBreaker;
     private URI baseUri;
+    private HttpResponse<String> response = null;
 
     /**
-     *
-     * @param baseUri URI to run get from
+     * @param baseUri  URI to run get from
      * @param groupKey group your commands into logical enteties for monitoring
      */
     protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey) {
@@ -34,9 +34,9 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
     }
 
     /**
-     * @param baseUri URI to run get from
+     * @param baseUri  URI to run get from
      * @param groupKey group your commands into logical enteties for monitoring
-     * @param timeout timeout in milliseconds.
+     * @param timeout  timeout in milliseconds.
      */
     protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey, int timeout) {
         super(baseUri, groupKey, timeout);
@@ -55,9 +55,31 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
     //https://gssachdeva.wordpress.com/2015/09/02/java-8-lambda-expression-for-design-patterns-command-design-pattern/
     public String getAsJson() {
         String json = null;
-        HttpResponse<String> response = run();
-        json = response.body();
+        if (isMocked) {
+            json = mockedResponseData;
+        } else {
+            HttpResponse<String> response = run();
+            json = response.body();
+        }
         return json;
+    }
+
+    /**
+     * When you expect eg. 204
+     *
+     * @return http status only
+     */
+    public int getHttpStatus() {
+        if (isMocked) {
+            return mockedStatusCode;
+        } else {
+            int statusCode = -1;
+            if (response == null) {
+                response = run();
+            }
+            statusCode = response.statusCode();
+            return statusCode;
+        }
     }
 
     //Should we impose String body on HttpCommands?
@@ -80,7 +102,6 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
         });
 
         HttpResponse<String> response = decorated.apply(httpRequest);
-
         return response;
     }
 

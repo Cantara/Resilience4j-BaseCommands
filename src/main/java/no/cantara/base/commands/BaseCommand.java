@@ -5,6 +5,11 @@ public abstract class BaseCommand {
     private final String groupKey;
     private final int timeout;
 
+    protected int mockedStatusCode;
+    protected String mockedResponseData;
+    protected boolean isMocked = false;
+
+
     protected BaseCommand(String groupKey) {
         this(groupKey, DEFAULT_TIMEOUT);
     }
@@ -21,4 +26,14 @@ public abstract class BaseCommand {
     public int getTimeout() {
         return timeout;
     }
+
+    //    @SuppressWarnings("unchecked")
+    public <T> T withMockedResponse(int i, String jsonMockedResponse) {
+        isMocked = true;
+        mockedStatusCode = i;
+        mockedResponseData = jsonMockedResponse;
+        return (T) this;
+    }
+
+    ;
 }
