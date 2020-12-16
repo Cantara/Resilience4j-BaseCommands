@@ -7,26 +7,30 @@ import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import javax.json.Json;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.http.HttpResponse;
 
 import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp;
 import static com.xebialabs.restito.builder.verify.VerifyHttp.verifyHttp;
 import static com.xebialabs.restito.semantics.Action.*;
-import static com.xebialabs.restito.semantics.Condition.method;
-import static com.xebialabs.restito.semantics.Condition.uri;
-import static com.xebialabs.restito.semantics.Condition.get;
-import static io.restassured.RestAssured.expect;
+import static com.xebialabs.restito.semantics.Condition.*;
 import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.slf4j.LoggerFactory.getLogger;
 
 //import io.restassured.RestAssured.*;
 //        import io.restassured.matcher.RestAssuredMatchers.*;
 //        import org.hamcrest.Matchers.*;
 
 public class BaseHttpGetResilience4jCommandTest {
+    private static final Logger log = getLogger(BaseHttpGetResilience4jCommandTest.class);
     private StubServer server;
     private BaseHttpGetResilience4jCommand baseHttpGetResilience4jCommand;
     private int port;
@@ -48,17 +52,25 @@ public class BaseHttpGetResilience4jCommandTest {
     }
 
     @Test
+    public void name() {
+    }
+
+    @Ignore
+    @Test
     public void shouldPassVerification() throws UnsupportedEncodingException {
         String dynamicId = "12345";
 
         //Restito
         String path = format("/demo/%s", dynamicId);
         whenHttp(server)
-                .match(get(path))
+                .match(baseUrl() + get(path))
                 .then(status(HttpStatus.OK_200), jsonContent(dynamicId), contentType("application/json"));
 
         // Rest-assured
-        expect().statusCode(200).when().get(path);
+//        expect().statusCode(200).when().get("hei" + path );
+        BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create(baseUrl() + path), "test", 50);
+        String response = getCommand.getAsJson();
+        assertNotNull(response);
 
         // Restito
         verifyHttp(server).once(
@@ -103,8 +115,17 @@ public class BaseHttpGetResilience4jCommandTest {
     }
 
     private String baseUrl() {
-        return format("http://localhost:%d/", server.getPort());
+        return format("http://localhost:%d", server.getPort());
     }
+
+    @Test
+    public void vg() {
+        BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("https://www.vg.no/"), "test");
+        HttpResponse<String> response = getCommand.run();
+        log.info("response: {}", response);
+        assertEquals(200, response.statusCode());
+    }
+
 
 
     /*

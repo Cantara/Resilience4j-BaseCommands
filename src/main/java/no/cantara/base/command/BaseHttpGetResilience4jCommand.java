@@ -103,6 +103,7 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
 
         HttpResponse<String> response = decorated.apply(httpRequest);
         return response;
+
     }
 
     @Override

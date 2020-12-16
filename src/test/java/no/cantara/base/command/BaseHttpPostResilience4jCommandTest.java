@@ -3,6 +3,7 @@ package no.cantara.base.command;
 import com.xebialabs.restito.server.StubServer;
 import io.restassured.RestAssured;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 
@@ -32,6 +33,7 @@ public class BaseHttpPostResilience4jCommandTest {
 
     }
 
+    @Ignore
     @Test
     public void shouldPassVerification() throws UnsupportedEncodingException {
         postCommand = new BaseHttpPostResilience4jCommand(URI.create("https://www.vg.no/"), "test");
