@@ -5,4 +5,10 @@
 # Resilience4j-BaseCommands
 Basic Commands for HTTP using CircuitBreaker with Resilience4j
 
+ * BaseHttpGetResilience4jCommand
+ * BaseHttpPostResilience4jCommand
+ * BaseHttpPutResilience4jCommand
+ * BaseResilience4jCommand
+ 
+ 
  
