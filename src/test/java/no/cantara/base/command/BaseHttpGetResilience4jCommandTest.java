@@ -1,12 +1,26 @@
 package no.cantara.base.command;
 
+import com.xebialabs.restito.semantics.Action;
 import com.xebialabs.restito.server.StubServer;
 import io.restassured.RestAssured;
+import org.glassfish.grizzly.http.Method;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.json.Json;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+
+import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp;
+import static com.xebialabs.restito.builder.verify.VerifyHttp.verifyHttp;
+import static com.xebialabs.restito.semantics.Action.*;
+import static com.xebialabs.restito.semantics.Condition.method;
+import static com.xebialabs.restito.semantics.Condition.uri;
+import static com.xebialabs.restito.semantics.Condition.get;
+import static io.restassured.RestAssured.expect;
+import static java.lang.String.format;
 
 //import io.restassured.RestAssured.*;
 //        import io.restassured.matcher.RestAssuredMatchers.*;
@@ -27,8 +41,30 @@ public class BaseHttpGetResilience4jCommandTest {
 
     }
 
+
+    @After
+    public void stop() {
+        server.stop();
+    }
+
     @Test
     public void shouldPassVerification() throws UnsupportedEncodingException {
+        String dynamicId = "12345";
+
+        //Restito
+        String path = format("/demo/%s", dynamicId);
+        whenHttp(server)
+                .match(get(path))
+                .then(status(HttpStatus.OK_200), jsonContent(dynamicId), contentType("application/json"));
+
+        // Rest-assured
+        expect().statusCode(200).when().get(path);
+
+        // Restito
+        verifyHttp(server).once(
+                method(Method.GET),
+                uri(path)
+        );
         /** Todo
         // Restito
         whenHttp(server).
@@ -56,6 +92,20 @@ public class BaseHttpGetResilience4jCommandTest {
         );
          */
     }
+
+    private Action jsonContent(String dynamicId) {
+        String jsonString = Json.createObjectBuilder()
+                .add("dynamicId", dynamicId)
+                .add("ok", true)
+                .build()
+                .toString();
+        return stringContent(jsonString);
+    }
+
+    private String baseUrl() {
+        return format("http://localhost:%d/", server.getPort());
+    }
+
 
     /*
     @Test

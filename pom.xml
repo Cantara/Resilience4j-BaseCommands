@@ -112,6 +112,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.json</artifactId>
+      <version>1.1.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.json</groupId>
+      <artifactId>javax.json-api</artifactId>
+      <version>1.1.4</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.0.13</version>
