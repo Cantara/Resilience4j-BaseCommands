@@ -5,7 +5,7 @@
 
   <groupId>no.cantara.base</groupId>
   <artifactId>Resilience4j-BaseCommands</artifactId>
-  <version>0.1.4-SNAPSHOT</version>
+  <version>0.2.0</version>
 
   <name>Resilience4j-BaseCommands</name>
 
@@ -52,7 +52,7 @@
     <developerConnection>scm:git:ssh://git@github.com/cantara/Resilience4j-BaseCommands.git</developerConnection>
     <connection>scm:git:https://github.com/cantara/Resilience4j-BaseCommands.git</connection>
     <url>https://github.com/cantara/Resilience4j-BaseCommands</url>
-    <tag>HEAD</tag>
+    <tag>Resilience4j-BaseCommands-0.2.0</tag>
   </scm>
 
 
