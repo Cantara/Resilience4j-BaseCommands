@@ -51,15 +51,18 @@ public class CommandProxyTest {
     @Test
     public void getCommand() {
         String dynamicId = "12345";
-
         String path = format("/demo/%s", dynamicId);
+
+        //Expect
+        createExpectationForGet(path, jsonBody(dynamicId));
 
         URI getFrom = URI.create(baseUrl() + path);
         log.info("Get from: {}", getFrom);
-        createExpectationForGet(path, jsonBody(dynamicId));
+        //Execute
         BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, "test", 50);
         Object result = commandProxy.run(getCommand);
         assertNotNull(result);
+        //Verify
         assertEquals(200, ((HttpResponse)result).statusCode());
     }
 
