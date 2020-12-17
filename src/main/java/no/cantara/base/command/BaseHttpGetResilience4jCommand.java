@@ -1,8 +1,5 @@
 package no.cantara.base.command;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import no.cantara.base.commands.BaseCommand;
 import org.slf4j.Logger;
 
@@ -11,7 +8,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.function.Function;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -19,8 +15,6 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     private static final Logger log = getLogger(BaseHttpGetResilience4jCommand.class);
     protected HttpClient client;
     private HttpRequest httpRequest;
-    private Function<HttpRequest, HttpResponse> decorated;
-    private CircuitBreaker circuitBreaker;
     private URI baseUri;
     private HttpResponse<String> response = null;
 
@@ -45,13 +39,9 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     }
 
     private void initializeCircuitBreaker() {
-        CircuitBreakerConfig config = CircuitBreakerConfig.ofDefaults();
-        CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(config);
-        circuitBreaker = registry.circuitBreaker(getGroupKey());
+
     }
 
-    //https://www.baeldung.com/java-9-http-client
-    //https://gssachdeva.wordpress.com/2015/09/02/java-8-lambda-expression-for-design-patterns-command-design-pattern/
     public String getAsJson() {
         String json = null;
         if (isMocked) {
