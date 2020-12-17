@@ -24,7 +24,8 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
     protected HttpResponse<String> run() {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .GET();
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(getBody()));
         if (buildAuthorization() != null) {
             builder = builder.header("Authorization", buildAuthorization());
         }
@@ -50,8 +51,8 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
         return authorization;
     }
 
-    void setAuthorization(String authorization) {
-        this.authorization = authorization;
+    void setBearerToken(String bearerToken) {
+        this.authorization = "Bearer " + bearerToken;
     }
 
     @Override
