@@ -1,6 +1,5 @@
 package no.cantara.base.command;
 
-import com.xebialabs.restito.semantics.Action;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -16,7 +15,6 @@ import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.concurrent.TimeUnit;
 
-import static com.xebialabs.restito.semantics.Action.stringContent;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,7 +27,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class CommandProxyTest {
     private static final Logger log = getLogger(CommandProxyTest.class);
-
 
     private CommandProxy commandProxy;
     private static ClientAndServer server;
@@ -120,15 +117,6 @@ public class CommandProxyTest {
                 .build()
                 .toString();
         return jsonString;
-    }
-
-    private Action jsonContent(String dynamicId) {
-        String jsonString = Json.createObjectBuilder()
-                .add("dynamicId", dynamicId)
-                .add("ok", true)
-                .build()
-                .toString();
-        return stringContent(jsonString);
     }
 
     private String baseUrl() {

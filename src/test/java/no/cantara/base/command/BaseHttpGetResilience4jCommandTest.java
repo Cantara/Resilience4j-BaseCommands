@@ -1,258 +1,93 @@
 package no.cantara.base.command;
 
-import com.xebialabs.restito.semantics.Action;
-import com.xebialabs.restito.server.StubServer;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.restassured.RestAssured;
-import io.vavr.control.Try;
-import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.HttpStatus;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.Header;
 import org.slf4j.Logger;
 
 import javax.json.Json;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
-import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp;
-import static com.xebialabs.restito.builder.verify.VerifyHttp.verifyHttp;
-import static com.xebialabs.restito.semantics.Action.*;
-import static com.xebialabs.restito.semantics.Condition.*;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 import static org.slf4j.LoggerFactory.getLogger;
-
-//import io.restassured.RestAssured.*;
-//        import io.restassured.matcher.RestAssuredMatchers.*;
-//        import org.hamcrest.Matchers.*;
 
 public class BaseHttpGetResilience4jCommandTest {
     private static final Logger log = getLogger(BaseHttpGetResilience4jCommandTest.class);
-    private StubServer server;
-    private BaseHttpGetResilience4jCommand baseHttpGetResilience4jCommand;
-    private int port;
-    private URI uri;
+    private CommandProxy commandProxy;
+    private static ClientAndServer server;
 
+    @BeforeClass
+    public static void startServer() {
+        server = startClientAndServer(1080);
+    }
     @Before
-    public void start() {
-        server = new StubServer().run();
-        RestAssured.port = server.getPort();
-        this.port = server.getPort();
-        uri = URI.create("http://localhost:" + port );
-
+    public void setUp() {
+        commandProxy = new CommandProxy();
     }
 
-
-    @After
-    public void stop() {
+    @AfterClass
+    public static void stopServer() {
         server.stop();
     }
 
     @Test
-    public void circuitBreaker() {
+    public void getCommand() {
         String dynamicId = "12345";
-
-        //Restito
         String path = format("/demo/%s", dynamicId);
-        whenHttp(server)
-                .match(baseUrl() + get(path))
-                .then(status(HttpStatus.OK_200), jsonContent(dynamicId), contentType("application/json"));
 
-        BaseResilience4jCommand backendService = new BaseHttpGetResilience4jCommand(URI.create(baseUrl() + path), "test", 50);
-//        String response = getCommand.getAsJson();
-//        assertNotNull(response);
-        // Create a custom configuration for a CircuitBreaker
-        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
-                .failureRateThreshold(50)
-                .waitDurationInOpenState(Duration.ofMillis(1000))
-                .permittedNumberOfCallsInHalfOpenState(2)
-                .slidingWindowSize(2)
-                .recordExceptions(IOException.class, TimeoutException.class)
-//                .ignoreExceptions(BusinessException.class, OtherBusinessException.class)
-                .build();
+        //Expect
+        createExpectationForGet(path, jsonBody(dynamicId));
 
-// Create a CircuitBreakerRegistry with a custom global configuration
-        CircuitBreakerRegistry circuitBreakerRegistry =
-                CircuitBreakerRegistry.of(circuitBreakerConfig);
-        CircuitBreaker circuitBreaker = circuitBreakerRegistry
-                .circuitBreaker("name");
-        Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(circuitBreaker, backendService::getBody);
-
-        String result = Try.ofSupplier(decoratedSupplier)
-                .recover(throwable -> "Hello from Recovery").get();
-
-//        String result = circuitBreaker
-//                .executeSupplier(backendService::getBody);
+        URI getFrom = URI.create(baseUrl() + path);
+        log.info("Get from: {}", getFrom);
+        //Execute
+        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, "test", 50);
+        Object result = commandProxy.run(getCommand);
         assertNotNull(result);
-
+        //Verify
+        assertEquals(200, ((HttpResponse)result).statusCode());
     }
 
-
-
-    @Ignore
-    @Test
-    public void shouldPassVerification() throws UnsupportedEncodingException {
-        String dynamicId = "12345";
-
-        //Restito
-        String path = format("/demo/%s", dynamicId);
-        whenHttp(server)
-                .match(baseUrl() + get(path))
-                .then(status(HttpStatus.OK_200), jsonContent(dynamicId), contentType("application/json"));
-
-        // Rest-assured
-//        expect().statusCode(200).when().get("hei" + path );
-        BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create(baseUrl() + path), "test", 50);
-        String response = getCommand.getAsJson();
-        assertNotNull(response);
-
-        // Restito
-        verifyHttp(server).once(
-                method(Method.GET),
-                uri(path)
-        );
-        /** Todo
-        // Restito
-        whenHttp(server).
-                match(get("/demo.json")).
-                then(status(HttpStatus.OK_200),stringContent("{\"hei\":\"du\"}"));
-
-        // Rest-assured
-//        BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("http://localhost:" + port + "/demo"), "test");
-//        String response = getCommand.getAsJson();
-//        assertNotNull(response);
-        given().
-                when().
-                get("/demo.json").
-                then().
-                assertThat().
-                body("hei",equalTo("du"));
-//        get("/events?id=390").then().statusCode(200).assertThat()
-//                .body("data.leagueId", equalTo(35));
-//        expect().statusCode(200).body(StringContains("{\"hei\":\"du\"}")).when().get("/demo");
-
-        // Restito
-        verifyHttp(server).once(
-                method(Method.GET),
-                uri("/demo.json")
-        );
-         */
+    private void createExpectationForGet(String path, String returnBody) {
+        new MockServerClient("127.0.0.1", 1080)
+                .when(
+                        request()
+                                .withMethod("GET")
+                                .withPath(path),
+                        exactly(1))
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("Cache-Control", "public, max-age=86400"))
+                                .withBody(returnBody)
+//                                .withDelay(TimeUnit.SECONDS,1)
+                );
     }
 
-    private Action jsonContent(String dynamicId) {
+    private String jsonBody(String dynamicId) {
         String jsonString = Json.createObjectBuilder()
                 .add("dynamicId", dynamicId)
                 .add("ok", true)
                 .build()
                 .toString();
-        return stringContent(jsonString);
+        return jsonString;
     }
 
     private String baseUrl() {
         return format("http://localhost:%d", server.getPort());
     }
-
-    @Test
-    public void vg() {
-        BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("https://www.vg.no/"), "test");
-        HttpResponse<String> response = getCommand.run();
-        log.info("response: {}", response);
-        assertEquals(200, response.statusCode());
-    }
-
-
-
-    /*
-    @Test
-    public void testDoPostCommandJson() throws Exception {
-
-        // Restito
-        whenHttp(server).
-//                match(contentType("applicatin/json"))
-        match(post("/postJson"), withHeader("CONTENT-TYPE", MediaType.APPLICATION_JSON)).
-                then(status(HttpStatus.OK_200), stringContent("Updated Ok") );
-
-
-        baseHttpPostResilience4jCommand = new BaseHttpPostResilience4jCommand(uri, "test") {
-            @Override
-            protected String getTargetPath() {
-                return "/postJson";
-            }
-
-            @Override
-            protected String getJsonBody() {
-                return "{\"test\": \"value\"}";
-            }
-        };
-
-        String response = (String) baseHttpPostResilience4jCommand.();
-        assertEquals("Updated Ok", response);
-
-    }
-
-    @Test
-    public void testDoPostCommandFormParams() throws Exception {
-        // Restito
-        whenHttp(server).
-//                match(contentType("applicatin/json"))
-        match(post("/postForm"), withHeader("CONTENT-TYPE", MediaType.APPLICATION_FORM_URLENCODED +"; charset=UTF-8")).
-//        match(post("/postForm")).
-                then(status(HttpStatus.OK_200), stringContent("Updated Ok") );
-
-
-        Map<String,String> formParams = new HashMap<>();
-        formParams.put("test", "value");
-        baseHttpPostResilience4jCommand = new BaseHttpPostResilience4jCommand(uri, "test") {
-            @Override
-            protected String getTargetPath() {
-                return "/postForm";
-            }
-
-            @Override
-            protected Map<String, String> getFormParameters() {
-                return formParams;
-            }
-        };
-
-        String response = (String) baseHttpPostResilience4jCommand.doPostCommand();
-        assertEquals("Updated Ok", response);
-
-    }
-
-    @After
-    public void stop() {
-        server.stop();
-    }
-
-    @Test
-    public void shouldPassVerification() throws UnsupportedEncodingException {
-        // Restito
-        whenHttp(server).
-                match(get("/demo")).
-                then(status(HttpStatus.OK_200));
-
-        // Rest-assured
-        expect().statusCode(200).when().get("/demo");
-
-        // Restito
-        verifyHttp(server).once(
-                method(Method.GET),
-                uri("/demo")
-        );
-    }
-
-
-     */
 
 }
