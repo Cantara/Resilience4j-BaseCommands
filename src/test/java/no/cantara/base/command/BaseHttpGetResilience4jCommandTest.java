@@ -2,7 +2,11 @@ package no.cantara.base.command;
 
 import com.xebialabs.restito.semantics.Action;
 import com.xebialabs.restito.server.StubServer;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.restassured.RestAssured;
+import io.vavr.control.Try;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.junit.After;
@@ -12,9 +16,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import javax.json.Json;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import static com.xebialabs.restito.builder.stub.StubHttp.whenHttp;
 import static com.xebialabs.restito.builder.verify.VerifyHttp.verifyHttp;
@@ -52,8 +60,45 @@ public class BaseHttpGetResilience4jCommandTest {
     }
 
     @Test
-    public void name() {
+    public void circuitBreaker() {
+        String dynamicId = "12345";
+
+        //Restito
+        String path = format("/demo/%s", dynamicId);
+        whenHttp(server)
+                .match(baseUrl() + get(path))
+                .then(status(HttpStatus.OK_200), jsonContent(dynamicId), contentType("application/json"));
+
+        BaseResilience4jCommand backendService = new BaseHttpGetResilience4jCommand(URI.create(baseUrl() + path), "test", 50);
+//        String response = getCommand.getAsJson();
+//        assertNotNull(response);
+        // Create a custom configuration for a CircuitBreaker
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+                .failureRateThreshold(50)
+                .waitDurationInOpenState(Duration.ofMillis(1000))
+                .permittedNumberOfCallsInHalfOpenState(2)
+                .slidingWindowSize(2)
+                .recordExceptions(IOException.class, TimeoutException.class)
+//                .ignoreExceptions(BusinessException.class, OtherBusinessException.class)
+                .build();
+
+// Create a CircuitBreakerRegistry with a custom global configuration
+        CircuitBreakerRegistry circuitBreakerRegistry =
+                CircuitBreakerRegistry.of(circuitBreakerConfig);
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry
+                .circuitBreaker("name");
+        Supplier<String> decoratedSupplier = CircuitBreaker.decorateSupplier(circuitBreaker, backendService::getBody);
+
+        String result = Try.ofSupplier(decoratedSupplier)
+                .recover(throwable -> "Hello from Recovery").get();
+
+//        String result = circuitBreaker
+//                .executeSupplier(backendService::getBody);
+        assertNotNull(result);
+
     }
+
+
 
     @Ignore
     @Test

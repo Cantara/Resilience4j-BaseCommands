@@ -28,6 +28,8 @@ public abstract class BaseResilience4jCommand extends BaseHttpCommand {
 
     protected abstract Object run();
 
+    protected abstract String getBody();
+
     @Override
     protected URI buildUri() {
         return getBaseUri();

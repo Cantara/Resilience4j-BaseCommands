@@ -51,4 +51,9 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
     protected String buildAuthorization() {
         return null;
     }
+
+    @Override
+    protected String getBody() {
+        return null;
+    }
 }

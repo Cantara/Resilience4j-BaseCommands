@@ -4,7 +4,6 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import no.cantara.base.commands.BaseCommand;
-import no.cantara.base.commands.http.BaseHttpCommand;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -16,7 +15,7 @@ import java.util.function.Function;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
+public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     private static final Logger log = getLogger(BaseHttpGetResilience4jCommand.class);
     protected HttpClient client;
     private HttpRequest httpRequest;
@@ -90,7 +89,7 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
                 .uri(buildUri())
                 .GET()
                 .build();
-        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
             try {
                 return client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             } catch (IOException e) {
@@ -99,11 +98,29 @@ public class BaseHttpGetResilience4jCommand extends BaseHttpCommand {
                 log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
             }
             return null;
-        });
+//        });
 
-        HttpResponse<String> response = decorated.apply(httpRequest);
-        return response;
+//        HttpResponse<String> response = decorated.apply(httpRequest);
+//        return response;
 
+    }
+
+    @Override
+    protected String getBody() {
+        httpRequest = HttpRequest.newBuilder()
+                .header("Authorization", buildAuthorization())
+                .uri(buildUri())
+                .GET()
+                .build();
+//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+        try {
+            response =  client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+        } catch (InterruptedException e) {
+            log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+        }
+        return response.body();
     }
 
     @Override
