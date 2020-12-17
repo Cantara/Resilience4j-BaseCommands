@@ -1,26 +1,134 @@
 package no.cantara.base.command;
 
+import com.xebialabs.restito.semantics.Action;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockserver.client.server.MockServerClient;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.Header;
+import org.mockserver.verify.VerificationTimes;
+import org.slf4j.Logger;
 
+import javax.json.Json;
 import java.net.URI;
+import java.net.http.HttpResponse;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static com.xebialabs.restito.semantics.Action.stringContent;
+import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.StringBody.exact;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class CommandProxyTest {
+    private static final Logger log = getLogger(CommandProxyTest.class);
+
 
     private CommandProxy commandProxy;
+    private static ClientAndServer server;
 
+    @BeforeClass
+    public static void startServer() {
+        server = startClientAndServer(1080);
+    }
     @Before
     public void setUp() {
         commandProxy = new CommandProxy();
     }
 
+    @AfterClass
+    public static void stopServer() {
+        server.stop();
+    }
+
     @Test
     public void getCommand() {
-//        BaseResilience4jCommand backendService = new BaseHttpGetResilience4jCommand(URI.create(baseUrl() + path), "test", 50);
-        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("https://www.vg.no/"), "test", 50);
+        String dynamicId = "12345";
+
+        String path = format("/demo/%s", dynamicId);
+
+        URI getFrom = URI.create(baseUrl() + path);
+        log.info("Get from: {}", getFrom);
+        createExpectationForGet(path, jsonBody(dynamicId));
+        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, "test", 50);
         Object result = commandProxy.run(getCommand);
         assertNotNull(result);
+        assertEquals(200, ((HttpResponse)result).statusCode());
+    }
+
+    private void createExpectationForGet(String path, String returnBody) {
+        new MockServerClient("127.0.0.1", 1080)
+                .when(
+                        request()
+                                .withMethod("GET")
+                                .withPath(path),
+                        exactly(1))
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("Cache-Control", "public, max-age=86400"))
+                                .withBody(returnBody)
+//                                .withDelay(TimeUnit.SECONDS,1)
+                );
+    }
+    private void createExpectationForInvalidAuth() {
+        new MockServerClient("127.0.0.1", 1080)
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/validate")
+                                .withHeader("\"Content-type\", \"application/json\"")
+                                .withBody(exact("{username: 'foo', password: 'bar'}")),
+                        exactly(1))
+                .respond(
+                        response()
+                                .withStatusCode(401)
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("Cache-Control", "public, max-age=86400"))
+                                .withBody("{ message: 'incorrect username and password combination' }")
+                                .withDelay(TimeUnit.SECONDS,1)
+                );
+    }
+
+    private void verifyPostRequest() {
+        new MockServerClient("localhost", 1080).verify(
+                request()
+                        .withMethod("POST")
+                        .withPath("/validate")
+                        .withBody(exact("{username: 'foo', password: 'bar'}")),
+                VerificationTimes.exactly(1)
+        );
+    }
+
+    private String jsonBody(String dynamicId) {
+        String jsonString = Json.createObjectBuilder()
+                .add("dynamicId", dynamicId)
+                .add("ok", true)
+                .build()
+                .toString();
+        return jsonString;
+    }
+
+    private Action jsonContent(String dynamicId) {
+        String jsonString = Json.createObjectBuilder()
+                .add("dynamicId", dynamicId)
+                .add("ok", true)
+                .build()
+                .toString();
+        return stringContent(jsonString);
+    }
+
+    private String baseUrl() {
+        return format("http://localhost:%d", server.getPort());
     }
 }

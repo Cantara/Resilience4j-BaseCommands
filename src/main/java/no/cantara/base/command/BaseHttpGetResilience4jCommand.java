@@ -90,18 +90,23 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
                 .GET()
                 .build();
 //        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
-            try {
-                return client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            } catch (IOException e) {
-                log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
-            } catch (InterruptedException e) {
-                log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
-            }
-            return null;
+        try {
+            log.info("URI: {}", buildUri());
+            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException e) {
+            log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+        } catch (InterruptedException e) {
+            log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+        }
+//            return null;
 //        });
 
 //        HttpResponse<String> response = decorated.apply(httpRequest);
-//        return response;
+        log.info("Response: {}", response);
+        if (response != null && response instanceof HttpResponse) {
+            log.info("Status: {}, Body: {}", response.statusCode(), response.body());
+        }
+        return response;
 
     }
 
@@ -114,7 +119,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
                 .build();
 //        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
         try {
-            response =  client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
             log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         } catch (InterruptedException e) {
@@ -130,6 +135,6 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     @Override
     protected String buildAuthorization() {
-        return "";
+        return "Bearer 12345";
     }
 }
