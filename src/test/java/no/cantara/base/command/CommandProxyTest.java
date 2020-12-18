@@ -27,13 +27,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class CommandProxyTest {
     private static final Logger log = getLogger(CommandProxyTest.class);
+    public static final int PORT = 1082;
 
     private CommandProxy commandProxy;
     private static ClientAndServer server;
 
     @BeforeClass
     public static void startServer() {
-        server = startClientAndServer(1080);
+        server = startClientAndServer(PORT);
     }
     @Before
     public void setUp() {
@@ -64,7 +65,7 @@ public class CommandProxyTest {
     }
 
     private void createExpectationForGet(String path, String returnBody) {
-        new MockServerClient("127.0.0.1", 1080)
+        new MockServerClient("127.0.0.1", PORT)
                 .when(
                         request()
                                 .withMethod("GET")
@@ -81,7 +82,7 @@ public class CommandProxyTest {
                 );
     }
     private void createExpectationForInvalidAuth() {
-        new MockServerClient("127.0.0.1", 1080)
+        new MockServerClient("127.0.0.1", PORT)
                 .when(
                         request()
                                 .withMethod("POST")
@@ -101,7 +102,7 @@ public class CommandProxyTest {
     }
 
     private void verifyPostRequest() {
-        new MockServerClient("localhost", 1080).verify(
+        new MockServerClient("localhost", PORT).verify(
                 request()
                         .withMethod("POST")
                         .withPath("/validate")
