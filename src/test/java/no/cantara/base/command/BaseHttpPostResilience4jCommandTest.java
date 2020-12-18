@@ -69,7 +69,7 @@ public class BaseHttpPostResilience4jCommandTest {
                         request()
                                 .withMethod("POST")
                                 .withPath(path)
-                                .withHeader("Content-Type", "application/json")
+                                .withHeader("Content-Type", "application/json; charset=utf-8")
                                 .withBody(exact(requestBody)),
                         exactly(1))
                 .respond(
@@ -87,7 +87,7 @@ public class BaseHttpPostResilience4jCommandTest {
                         request()
                                 .withMethod("POST")
                                 .withPath(path)
-                                .withHeader("Content-type", "application/json")
+                                .withHeader("Content-type", "application/json; charset=utf-8")
                                 .withBody(exact(requestBody)),
                         exactly(1))
                 .respond(
