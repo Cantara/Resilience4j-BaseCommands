@@ -24,7 +24,8 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseResilience4jCom
     protected HttpResponse<String> run() {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .GET();
+                .header("Content-Type", "application/json; charset=utf-8")
+                .PUT(HttpRequest.BodyPublishers.ofString(getBody()));
         if (buildAuthorization() != null) {
             builder = builder.header("Authorization", buildAuthorization());
         }

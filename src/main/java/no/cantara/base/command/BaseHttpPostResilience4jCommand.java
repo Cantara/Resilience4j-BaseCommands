@@ -24,7 +24,7 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
     protected HttpResponse<String> run() {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .header("Content-Type", "application/json")
+                .header("Content-Type", "application/json; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(getBody()));
         if (buildAuthorization() != null) {
             builder = builder.header("Authorization", buildAuthorization());
