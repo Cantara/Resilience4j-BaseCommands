@@ -12,7 +12,7 @@ public class CommandProxy {
     private final CircuitBreakerRegistry registry;
 
     public CommandProxy() {
-        CircuitBreakerConfig config = CircuitBreakerConfig.ofDefaults();
+        CircuitBreakerConfig config = getConfig();
         registry = CircuitBreakerRegistry.of(config);
 
     }
@@ -21,8 +21,14 @@ public class CommandProxy {
         String groupKey = command.getGroupKey();
         CircuitBreaker circuitBreaker = registry.circuitBreaker(groupKey);
         Object result = circuitBreaker.executeSupplier(command::run);
-        log.info("Result: {}", result);
+        log.trace("Result of CommandProxy::Run : {}", result);
         return result;
     }
 
+    protected CircuitBreakerConfig getConfig() {
+        return CircuitBreakerConfig.ofDefaults();
+    }
+    public CircuitBreakerRegistry getRegistry() {
+        return registry;
+    }
 }
