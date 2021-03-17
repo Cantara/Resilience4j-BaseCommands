@@ -37,7 +37,7 @@ public class BaseHttpPostResilience4jCommandTest {
 
     @BeforeClass
     public static void startServer() {
-        server = startClientAndServer(1080);
+        server = startClientAndServer(1081);
     }
     @Before
     public void setUp() {
@@ -64,7 +64,7 @@ public class BaseHttpPostResilience4jCommandTest {
         assertTrue(response.body().contains(CREATED_ID));
     }
     private void createExpectationPost(String path, String requestBody) {
-        new MockServerClient("127.0.0.1", 1080)
+        new MockServerClient("127.0.0.1", 1081)
                 .when(
                         request()
                                 .withMethod("POST")
@@ -82,7 +82,7 @@ public class BaseHttpPostResilience4jCommandTest {
                 );
     }
     private void createExpectationForMissingAuthHeader(String path, String requestBody) {
-        new MockServerClient("127.0.0.1", 1080)
+        new MockServerClient("127.0.0.1", 1081)
                 .when(
                         request()
                                 .withMethod("POST")
