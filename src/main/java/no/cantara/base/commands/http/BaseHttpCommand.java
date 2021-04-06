@@ -3,6 +3,7 @@ package no.cantara.base.commands.http;
 
 import no.cantara.base.commands.BaseCommand;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,7 +30,7 @@ public abstract class BaseHttpCommand<HttpResponse> extends BaseCommand {
         return baseUri;
     }
 
-    protected abstract HttpResponse run();
+    protected abstract HttpResponse run() throws InterruptedException, IOException;
 
     protected abstract URI buildUri();
 

@@ -3,6 +3,7 @@ package no.cantara.base.command;
 import junit.framework.TestCase;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class BaseHttpGetCommandTest extends TestCase {
@@ -12,7 +13,7 @@ public class BaseHttpGetCommandTest extends TestCase {
     String groupKey = "test";
 
     @Test
-    public void testMockedGetCommand() {
+    public void testMockedGetCommand() throws IOException, InterruptedException {
         String jsonMockedResponse = "{\"status\":\"ok\"}";
 
         BaseHttpGetResilience4jCommand baseHttpGetResilience4jCommand = new BaseHttpGetResilience4jCommand(baseUri, groupKey)
@@ -27,7 +28,7 @@ public class BaseHttpGetCommandTest extends TestCase {
 
 
     @Test
-    public void shouldPassVerification() {
+    public void shouldPassVerification() throws IOException, InterruptedException {
 
         String expectedJsonresponse = "{\"hei\":\"du\"}";
         BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("http://localhost:" + port + "/demo"), "test").withMockedResponse(200, expectedJsonresponse);

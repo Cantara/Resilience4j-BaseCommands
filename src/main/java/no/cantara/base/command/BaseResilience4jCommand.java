@@ -4,6 +4,8 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import no.cantara.base.commands.http.BaseHttpCommand;
+
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 
@@ -26,9 +28,9 @@ public abstract class BaseResilience4jCommand extends BaseHttpCommand {
         circuitBreaker = registry.circuitBreaker(getGroupKey());
     }
 
-    protected abstract Object run();
+    protected abstract Object run() throws InterruptedException, IOException;
 
-    protected abstract String getBody();
+    protected abstract String getBody() throws IOException, InterruptedException;
 
     @Override
     protected URI buildUri() {

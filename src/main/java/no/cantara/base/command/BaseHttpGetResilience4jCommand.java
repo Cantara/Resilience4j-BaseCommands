@@ -42,7 +42,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     }
 
-    public String getAsJson() {
+    public String getAsJson() throws IOException, InterruptedException {
         String json = null;
         if (isMocked) {
             json = mockedResponseData;
@@ -58,7 +58,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
      *
      * @return http status only
      */
-    public int getHttpStatus() {
+    public int getHttpStatus() throws IOException, InterruptedException {
         if (isMocked) {
             return mockedStatusCode;
         } else {
@@ -73,7 +73,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     //Should we impose String body on HttpCommands?
     @Override
-    protected HttpResponse<String> run() {
+    protected HttpResponse<String> run() throws InterruptedException, IOException {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
@@ -85,8 +85,10 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
             log.warn("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            throw e;
         } catch (InterruptedException e) {
             log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            throw e;
         }
 //            return null;
 //        });
@@ -101,7 +103,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     }
 
     @Override
-    protected String getBody() {
+    protected String getBody() throws InterruptedException, IOException {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
@@ -112,8 +114,10 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
             log.warn("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            throw e;
         } catch (InterruptedException e) {
-            log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            log.warn("InterruptedException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            throw e;
         }
         return response.body();
     }
