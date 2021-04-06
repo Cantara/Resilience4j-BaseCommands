@@ -81,20 +81,20 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
                 .build();
 //        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
         try {
-            log.info("URI: {}", buildUri());
+            log.debug("URI: {}", buildUri());
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
-            log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            log.warn("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         } catch (InterruptedException e) {
-            log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         }
 //            return null;
 //        });
 
 //        HttpResponse<String> response = decorated.apply(httpRequest);
-        log.info("Response: {}", response);
+        log.debug("Response: {}", response);
         if (response != null && response instanceof HttpResponse) {
-            log.info("Status: {}, Body: {}", response.statusCode(), response.body());
+            log.debug("Status: {}, Body: {}", response.statusCode(), response.body());
         }
         return response;
 
@@ -111,9 +111,9 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
         try {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
-            log.debug("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            log.warn("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         } catch (InterruptedException e) {
-            log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
+            log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         }
         return response.body();
     }
