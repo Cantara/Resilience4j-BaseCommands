@@ -1,13 +1,13 @@
 package no.cantara.base.commands.http;
 
 
+import no.cantara.base.command.UnsuccesfulStatusCodeException;
 import no.cantara.base.commands.BaseCommand;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.function.Function;
 
 public abstract class BaseHttpCommand<HttpResponse> extends BaseCommand {
@@ -30,7 +30,7 @@ public abstract class BaseHttpCommand<HttpResponse> extends BaseCommand {
         return baseUri;
     }
 
-    protected abstract HttpResponse run() throws InterruptedException, IOException;
+    protected abstract HttpResponse run() throws InterruptedException, IOException, UnsuccesfulStatusCodeException;
 
     protected abstract URI buildUri();
 

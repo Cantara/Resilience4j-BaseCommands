@@ -13,7 +13,7 @@ public class BaseHttpGetCommandTest extends TestCase {
     String groupKey = "test";
 
     @Test
-    public void testMockedGetCommand() throws IOException, InterruptedException {
+    public void testMockedGetCommand() throws IOException, InterruptedException, UnsuccesfulStatusCodeException {
         String jsonMockedResponse = "{\"status\":\"ok\"}";
 
         BaseHttpGetResilience4jCommand baseHttpGetResilience4jCommand = new BaseHttpGetResilience4jCommand(baseUri, groupKey)
@@ -28,7 +28,7 @@ public class BaseHttpGetCommandTest extends TestCase {
 
 
     @Test
-    public void shouldPassVerification() throws IOException, InterruptedException {
+    public void shouldPassVerification() throws IOException, InterruptedException, UnsuccesfulStatusCodeException {
 
         String expectedJsonresponse = "{\"hei\":\"du\"}";
         BaseHttpGetResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(URI.create("http://localhost:" + port + "/demo"), "test").withMockedResponse(200, expectedJsonresponse);

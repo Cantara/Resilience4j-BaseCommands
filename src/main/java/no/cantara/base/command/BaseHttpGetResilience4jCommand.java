@@ -1,5 +1,7 @@
 package no.cantara.base.command;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.core.SupplierUtils;
 import no.cantara.base.commands.BaseCommand;
 import org.slf4j.Logger;
 
@@ -8,6 +10,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -42,7 +46,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     }
 
-    public String getAsJson() throws IOException, InterruptedException {
+    public String getAsJson() throws IOException, InterruptedException, UnsuccesfulStatusCodeException {
         String json = null;
         if (isMocked) {
             json = mockedResponseData;
@@ -58,7 +62,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
      *
      * @return http status only
      */
-    public int getHttpStatus() throws IOException, InterruptedException {
+    public int getHttpStatus() throws IOException, InterruptedException, UnsuccesfulStatusCodeException {
         if (isMocked) {
             return mockedStatusCode;
         } else {
@@ -73,13 +77,13 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     //Should we impose String body on HttpCommands?
     @Override
-    protected HttpResponse<String> run() throws InterruptedException, IOException {
+    protected HttpResponse<String> run() throws InterruptedException, IOException, UnsuccesfulStatusCodeException {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
                 .GET()
                 .build();
-//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+
         try {
             log.debug("URI: {}", buildUri());
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -90,20 +94,25 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
             throw e;
         }
-//            return null;
-//        });
 
 //        HttpResponse<String> response = decorated.apply(httpRequest);
         log.debug("Response: {}", response);
         if (response != null && response instanceof HttpResponse) {
             log.debug("Status: {}, Body: {}", response.statusCode(), response.body());
-        }
-        return response;
 
+            if (successfulStatusCodes().contains(response.statusCode())) {
+                return response;
+            } else {
+                final String errorMessage = "UnsuccesfulStatusCode: Statuscode " + response.statusCode() + " is not in successful set of [" + successfulStatusCodes() + "]. Http body is: " + response.body();
+                log.warn(errorMessage);
+                throw new UnsuccesfulStatusCodeException(response.statusCode(), errorMessage);
+            }
+        }
+        throw new IOException("Expected HttpResponse");
     }
 
     @Override
-    protected String getBody() throws InterruptedException, IOException {
+    protected String getBody() throws InterruptedException, IOException, UnsuccesfulStatusCodeException {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
@@ -119,7 +128,20 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             log.warn("InterruptedException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
             throw e;
         }
-        return response.body();
+
+        log.debug("Response: {}", response);
+        if (response != null && response instanceof HttpResponse) {
+            log.debug("Status: {}, Body: {}", response.statusCode(), response.body());
+
+            if (successfulStatusCodes().contains(response.statusCode())) {
+                return response.body();
+            } else {
+                final String errorMessage = "UnsuccesfulStatusCode: Statuscode " + response.statusCode() + " is not in successful set of [" + successfulStatusCodes() + "]. Http body is: " + response.body();
+                log.warn(errorMessage);
+                throw new UnsuccesfulStatusCodeException(response.statusCode(), errorMessage);
+            }
+        }
+        throw new IOException("Expected HttpResponse");
     }
 
     @Override
@@ -130,5 +152,9 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     @Override
     protected String buildAuthorization() {
         return "Bearer 12345";
+    }
+
+    protected Set<Integer> successfulStatusCodes() {
+        return Set.of(200);
     }
 }
