@@ -10,7 +10,7 @@ import org.mockserver.model.Header;
 import org.slf4j.Logger;
 
 import javax.json.Json;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.UUID;
@@ -50,7 +50,7 @@ public class BaseHttpPostResilience4jCommandTest {
     }
 
     @Test
-    public void successfullPost() throws UnsupportedEncodingException {
+    public void successfullPost() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
         String path = "/create";
         String dynamicId = UUID.randomUUID().toString();
         String requestBody = jsonBody(dynamicId);

@@ -1,9 +1,6 @@
 package no.cantara.base.command;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
@@ -11,6 +8,7 @@ import org.mockserver.verify.VerificationTimes;
 import org.slf4j.Logger;
 
 import javax.json.Json;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.concurrent.TimeUnit;
@@ -28,9 +26,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class CommandProxyTest {
     private static final Logger log = getLogger(CommandProxyTest.class);
     public static final int PORT = 1082;
+    public static final String GROUP_KEY = "test";
 
     private CommandProxy commandProxy;
     private static ClientAndServer server;
+    private String dynamicId;
+    private String path;
 
     @BeforeClass
     public static void startServer() {
@@ -39,6 +40,7 @@ public class CommandProxyTest {
     @Before
     public void setUp() {
         commandProxy = new CommandProxy();
+        dynamicId = "12345";
     }
 
     @AfterClass
@@ -47,12 +49,61 @@ public class CommandProxyTest {
     }
 
     @Test
-    public void getCommand() {
+    public void expectErrorCodesMoreThan500ToCountAsFailed()  {
+        path = format("/demo/%s", dynamicId);
+
+        //Expect
+        createExpectationForGet(path, 500, "Internal Server Erro");
+
+        URI getFrom = URI.create(baseUrl() + path);
+        log.info("Get from: {}", getFrom);
+        //Execute
+        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, GROUP_KEY, 50);
+        try {
+            commandProxy.run(getCommand);
+            Assert.fail();
+        } catch (UnsuccesfulStatusCodeException e) {
+            assertEquals(500, e.getStatusCode());
+            final int numberOfFailedCalls = commandProxy.getRegistry().circuitBreaker(GROUP_KEY).getMetrics().getNumberOfFailedCalls();
+            assertEquals(1, numberOfFailedCalls);
+        } catch (IOException | InterruptedException e) {
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void expectErrorCodesLessThan500NotToCountAsFailed()  {
+        path = format("/demo/%s", dynamicId);
+
+        //Expect
+        createExpectationForGet(path, 404, null);
+
+        URI getFrom = URI.create(baseUrl() + path);
+        log.info("Get from: {}", getFrom);
+        //Execute
+        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, GROUP_KEY, 50);
+        try {
+            commandProxy.run(getCommand);
+            Assert.fail();
+        } catch (UnsuccesfulStatusCodeException e) {
+            assertEquals(404, e.getStatusCode());
+            final int numberOfFailedCalls = commandProxy.getRegistry().circuitBreaker(GROUP_KEY).getMetrics().getNumberOfFailedCalls();
+            assertEquals(0, numberOfFailedCalls);
+        } catch (IOException | InterruptedException e) {
+            Assert.fail();
+        }
+
+    }
+
+    @Test
+    public void getCommand() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
         String dynamicId = "12345";
         String path = format("/demo/%s", dynamicId);
 
         //Expect
-        createExpectationForGet(path, jsonBody(dynamicId));
+        createExpectationForGet(path, 200, jsonBody(dynamicId));
 
         URI getFrom = URI.create(baseUrl() + path);
         log.info("Get from: {}", getFrom);
@@ -64,7 +115,7 @@ public class CommandProxyTest {
         assertEquals(200, ((HttpResponse)result).statusCode());
     }
 
-    private void createExpectationForGet(String path, String returnBody) {
+    private void createExpectationForGet(String path, int status, String returnBody) {
         new MockServerClient("127.0.0.1", PORT)
                 .when(
                         request()
@@ -73,11 +124,11 @@ public class CommandProxyTest {
                         exactly(1))
                 .respond(
                         response()
-                                .withStatusCode(200)
+                                .withStatusCode(status)
                                 .withHeaders(
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400"))
-                                .withBody(returnBody)
+                                 .withBody(returnBody)
 //                                .withDelay(TimeUnit.SECONDS,1)
                 );
     }

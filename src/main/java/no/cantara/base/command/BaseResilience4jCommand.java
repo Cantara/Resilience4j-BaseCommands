@@ -28,7 +28,7 @@ public abstract class BaseResilience4jCommand extends BaseHttpCommand {
         circuitBreaker = registry.circuitBreaker(getGroupKey());
     }
 
-    protected abstract Object run() throws InterruptedException, IOException, UnsuccesfulStatusCodeException;
+    protected abstract Object run();
 
     protected abstract String getBody() throws IOException, InterruptedException, UnsuccesfulStatusCodeException;
 

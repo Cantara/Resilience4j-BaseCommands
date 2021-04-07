@@ -1,7 +1,5 @@
 package no.cantara.base.command;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.core.SupplierUtils;
 import no.cantara.base.commands.BaseCommand;
 import org.slf4j.Logger;
 
@@ -11,7 +9,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -77,7 +74,7 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     //Should we impose String body on HttpCommands?
     @Override
-    protected HttpResponse<String> run() throws InterruptedException, IOException, UnsuccesfulStatusCodeException {
+    protected HttpResponse<String> run() {
         httpRequest = HttpRequest.newBuilder()
                 .header("Authorization", buildAuthorization())
                 .uri(buildUri())
@@ -89,10 +86,10 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
             log.warn("IOException when trying to get from {}. Reason {}", buildUri(), e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         } catch (InterruptedException e) {
             log.warn("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         }
 
 //        HttpResponse<String> response = decorated.apply(httpRequest);
@@ -105,10 +102,10 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             } else {
                 final String errorMessage = "UnsuccesfulStatusCode: Statuscode " + response.statusCode() + " is not in successful set of [" + successfulStatusCodes() + "]. Http body is: " + response.body();
                 log.warn(errorMessage);
-                throw new UnsuccesfulStatusCodeException(response.statusCode(), errorMessage);
+                throw new RuntimeException(new UnsuccesfulStatusCodeException(response.statusCode(), errorMessage));
             }
         }
-        throw new IOException("Expected HttpResponse");
+        throw new RuntimeException(new IOException("Expected HttpResponse"));
     }
 
     @Override

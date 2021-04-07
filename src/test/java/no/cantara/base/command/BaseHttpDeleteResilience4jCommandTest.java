@@ -10,6 +10,7 @@ import org.mockserver.model.Header;
 import org.slf4j.Logger;
 
 import javax.json.Json;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
 
@@ -42,7 +43,7 @@ public class BaseHttpDeleteResilience4jCommandTest {
     }
 
     @Test
-    public void deleteCommand() {
+    public void deleteCommand() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
         String dynamicId = "12345";
         String path = format("/demo/%s", dynamicId);
 
