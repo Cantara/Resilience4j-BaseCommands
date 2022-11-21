@@ -22,6 +22,11 @@
     <mockito.version>4.9.0</mockito.version>
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.source>11</maven.compiler.source>
+
+    <!-- plugins -->
+    <maven-compiler-plugin>3.10.1</maven-compiler-plugin>
+    <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
+    <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
   </properties>
 
 
@@ -33,8 +38,8 @@
       <roles>
         <role>Developer</role>
       </roles>
-      <organization>Capra Consulting AS</organization>
-      <organizationUrl>http://www.capraconsulting.no/</organizationUrl>
+      <organization>eXOReaction AS</organization>
+      <organizationUrl>https://eXOReaction.com/</organizationUrl>
     </developer>
     <developer>
       <id>baardl</id>
@@ -55,21 +60,6 @@
     <tag>HEAD</tag>
   </scm>
 
-
-  <repositories>
-    <!-- Needed for parent  -->
-    <repository>
-      <id>cantara-releases</id>
-      <name>Cantara Release Repository</name>
-      <url>https://mvnrepo.cantara.no/content/repositories/releases/</url>
-    </repository>
-    <!-- Needed for SDK snapshots  -->
-    <repository>
-      <id>cantara-snapshots</id>
-      <name>Cantara Snapshot Repository</name>
-      <url>https://mvnrepo.cantara.no/content/repositories/snapshots/</url>
-    </repository>
-  </repositories>
 
   <dependencies>
 
@@ -137,60 +127,75 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-      <plugins>
-        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>3.2.0</version>
-        </plugin>
-        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
-        <plugin>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.10.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>3.3.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>3.1.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.0.0</version>
-        </plugin>
-        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
-          <plugin>
-              <artifactId>maven-site-plugin</artifactId>
-              <version>3.12.1</version>
-          </plugin>
-          <plugin>
-              <artifactId>maven-project-info-reports-plugin</artifactId>
-              <version>3.4.1</version>
-          </plugin>
-      </plugins>
-    </pluginManagement>
-      <plugins>
-          <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-compiler-plugin</artifactId>
-              <configuration>
-                  <source>11</source>
-                  <target>11</target>
-              </configuration>
-          </plugin>
-      </plugins>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <testSource>${java.version}</testSource>
+          <target>${java.version}</target>
+          <testTarget>${java.version}</testTarget>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <compilerArgs>
+            <arg>-Xlint:deprecation</arg>
+          </compilerArgs>
+          <forceJavacCompilerUse>true</forceJavacCompilerUse>
+        </configuration>
+        <executions>
+          <execution>
+            <id>compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>testCompile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <!-- Ensures to run JUnit Tests  -->
+      <!-- https://dzone.com/articles/why-your-junit-5-tests-are-not-running-under-maven -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
+
+
+  <repositories>
+    <!-- Needed for parent  -->
+    <repository>
+      <id>cantara-releases</id>
+      <name>Cantara Release Repository</name>
+      <url>https://mvnrepo.cantara.no/content/repositories/releases/</url>
+    </repository>
+    <!-- Needed for SDK snapshots  -->
+    <repository>
+      <id>cantara-snapshots</id>
+      <name>Cantara Snapshot Repository</name>
+      <url>https://mvnrepo.cantara.no/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
+
 </project>
