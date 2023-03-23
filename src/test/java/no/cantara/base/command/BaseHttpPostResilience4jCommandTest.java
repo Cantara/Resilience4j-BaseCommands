@@ -13,6 +13,7 @@ import javax.json.Json;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -63,6 +64,23 @@ public class BaseHttpPostResilience4jCommandTest {
         assertEquals(201, response.statusCode());
         assertTrue(response.body().contains(CREATED_ID));
     }
+
+    @Test
+    public void successfullPost_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
+        String path = "/create";
+        String dynamicId = UUID.randomUUID().toString();
+        String requestBody = jsonBody(dynamicId);
+        createExpectationPost(path, requestBody);
+        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
+        BaseHttpPostResilience4jCommand postCommand = new BaseHttpPostResilience4jCommand(URI.create(baseUrl() + path), "test", extraHeaders);
+        postCommand.setBody(requestBody);
+        HttpResponse<String> response = (HttpResponse<String>) commandProxy.run(postCommand);
+        log.info("Response (extra headers): {}", response);
+        assertNotNull(response);
+        assertEquals(201, response.statusCode());
+        assertTrue(response.body().contains(CREATED_ID));
+    }
+
     private void createExpectationPost(String path, String requestBody) {
         new MockServerClient("127.0.0.1", 1081)
                 .when(
@@ -81,6 +99,28 @@ public class BaseHttpPostResilience4jCommandTest {
 //                                .withDelay(TimeUnit.SECONDS,1)
                 );
     }
+
+    private void createExpectationPost_withExtraHeaders(String path, String requestBody) {
+        new MockServerClient("127.0.0.1", 1081)
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath(path)
+                                .withHeader("Content-Type", "application/json; charset=utf-8")
+                                .withBody(exact(requestBody)),
+                        exactly(1))
+                .respond(
+                        response()
+                                .withStatusCode(201)
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("FDO_HEADER", "foo"),
+                                        new Header("BAR_HEADER", "bar"))
+                                .withBody("{ \"id\": \"" + CREATED_ID + "\" }")
+//                                .withDelay(TimeUnit.SECONDS,1)
+                );
+    }
+
     private void createExpectationForMissingAuthHeader(String path, String requestBody) {
         new MockServerClient("127.0.0.1", 1081)
                 .when(

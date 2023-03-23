@@ -13,6 +13,7 @@ import javax.json.Json;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
@@ -60,6 +61,31 @@ public class BaseHttpGetResilience4jCommandTest {
         assertEquals(200, ((HttpResponse)result).statusCode());
     }
 
+
+
+    @Test
+    public void getCommand_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
+        String dynamicId = "12345";
+        String path = format("/demo/%s", dynamicId);
+
+        //Expect
+        createExpectationForGet_withExtraHeaders(path, jsonBody(dynamicId));
+
+        URI getFrom = URI.create(baseUrl() + path);
+        log.info("Get from: {}", getFrom);
+
+        // Extre headers we want to add to the request
+        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
+
+        //Execute
+        BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, "test", 50, extraHeaders);
+        Object result = commandProxy.run(getCommand);
+        assertNotNull(result);
+        //Verify
+        assertEquals(200, ((HttpResponse)result).statusCode());
+        log.info("Response (extra headers): {}", ((HttpResponse<?>) result).body());
+    }
+
     private void createExpectationForGet(String path, String returnBody) {
         new MockServerClient("127.0.0.1", 1080)
                 .when(
@@ -73,6 +99,27 @@ public class BaseHttpGetResilience4jCommandTest {
                                 .withHeaders(
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("Cache-Control", "public, max-age=86400"))
+                                .withBody(returnBody)
+//                                .withDelay(TimeUnit.SECONDS,1)
+                );
+    }
+
+
+    private void createExpectationForGet_withExtraHeaders(String path, String returnBody) {
+        new MockServerClient("127.0.0.1", 1080)
+                .when(
+                        request()
+                                .withMethod("GET")
+                                .withPath(path),
+                        exactly(1))
+                .respond(
+                        response()
+                                .withStatusCode(200)
+                                .withHeaders(
+                                        new Header("Content-Type", "application/json; charset=utf-8"),
+                                        new Header("Cache-Control", "public, max-age=86400"),
+                                        new Header("FDO_HEADER", "foo"),
+                                        new Header("BAR_HEADER", "bar"))
                                 .withBody(returnBody)
 //                                .withDelay(TimeUnit.SECONDS,1)
                 );
