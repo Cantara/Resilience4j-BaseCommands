@@ -71,7 +71,7 @@ public class BaseHttpPostResilience4jCommandTest {
         String dynamicId = UUID.randomUUID().toString();
         String requestBody = jsonBody(dynamicId);
         createExpectationPost(path, requestBody);
-        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foozz","BAR_HEADER","barzz");
+        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
         BaseHttpPostResilience4jCommand postCommand = new BaseHttpPostResilience4jCommand(URI.create(baseUrl() + path), "test", extraHeaders);
         postCommand.setBody(requestBody);
         HttpResponse<String> response = (HttpResponse<String>) commandProxy.run(postCommand);

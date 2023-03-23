@@ -74,7 +74,7 @@ public class BaseHttpDeleteResilience4jCommandTest {
         log.info("Delete from: {}", deleteUri);
 
         // Extre headers we want to add to the request
-        Map<String,String> extraHeaders = Map.of("FDO_HEADER","fooxx","BAR_HEADER","barxx");
+        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
 
         //Execute
         BaseResilience4jCommand deleteCommand = new BaseHttpDeleteResilience4jCommand(deleteUri, "test", 50, extraHeaders);

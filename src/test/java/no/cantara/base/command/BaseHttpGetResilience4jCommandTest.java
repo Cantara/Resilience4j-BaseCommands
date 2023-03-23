@@ -75,7 +75,7 @@ public class BaseHttpGetResilience4jCommandTest {
         log.info("Get from: {}", getFrom);
 
         // Extre headers we want to add to the request
-        Map<String,String> extraHeaders = Map.of("FDO_HEADER","fooyy","BAR_HEADER","baryy");
+        Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
 
         //Execute
         BaseResilience4jCommand getCommand = new BaseHttpGetResilience4jCommand(getFrom, "test", 50, extraHeaders);
