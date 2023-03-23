@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,10 +31,30 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     /**
      * @param baseUri  URI to run get from
      * @param groupKey group your commands into logical enteties for monitoring
+     * @param extraHeaders  add extra http headers to the command
+     */
+    protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey, Map<String,String> extraHeaders) {
+        this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT, extraHeaders);
+    }
+
+    /**
+     * @param baseUri  URI to run get from
+     * @param groupKey group your commands into logical enteties for monitoring
      * @param timeout  timeout in milliseconds.
      */
     protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey, int timeout) {
-        super(baseUri, groupKey, timeout);
+        this(baseUri, groupKey, timeout, null);
+    }
+
+
+    /**
+     * @param baseUri  URI to run get from
+     * @param groupKey group your commands into logical enteties for monitoring
+     * @param timeout  timeout in milliseconds.
+     * @param extraHeaders  add extra http headers to the command
+     */
+    protected BaseHttpGetResilience4jCommand(URI baseUri, String groupKey, int timeout, Map<String,String> extraHeaders) {
+        super(baseUri, groupKey, timeout, extraHeaders);
         client = HttpClient.newBuilder().build();
         initializeCircuitBreaker();
         this.baseUri = baseUri;
@@ -75,11 +96,13 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
     //Should we impose String body on HttpCommands?
     @Override
     protected HttpResponse<String> run() {
-        httpRequest = HttpRequest.newBuilder()
-                .header("Authorization", buildAuthorization())
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .GET()
-                .build();
+                .GET();
+        if (getHeaders().length > 0) {
+            builder = builder.headers(getHeaders());
+        }
+        httpRequest = builder.build();
 
         try {
             log.debug("URI: {}", buildUri());
@@ -92,7 +115,6 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
             throw new RuntimeException(e);
         }
 
-//        HttpResponse<String> response = decorated.apply(httpRequest);
         log.debug("Response: {}", response);
         if (response != null && response instanceof HttpResponse) {
             log.debug("Status: {}, Body: {}", response.statusCode(), response.body());
@@ -110,12 +132,14 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
 
     @Override
     protected String getBody() throws InterruptedException, IOException, UnsuccesfulStatusCodeException {
-        httpRequest = HttpRequest.newBuilder()
-                .header("Authorization", buildAuthorization())
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .GET()
-                .build();
-//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+                .GET();
+        if (getHeaders().length > 0) {
+            builder = builder.headers(getHeaders());
+        }
+        httpRequest = builder.build();
+
         try {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -17,7 +18,11 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
     private String authorization = null;
 
     protected BaseHttpPostResilience4jCommand(URI baseUri, String groupKey) {
-        super(baseUri, groupKey);
+        this(baseUri, groupKey, null);
+    }
+
+    protected BaseHttpPostResilience4jCommand(URI baseUri, String groupKey, Map<String,String> extraHeaders) {
+        super(baseUri, groupKey, extraHeaders);
     }
 
     @Override
@@ -26,8 +31,8 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
                 .uri(buildUri())
                 .header("Content-Type", "application/json; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(getBody()));
-        if (buildAuthorization() != null) {
-            builder = builder.header("Authorization", buildAuthorization());
+        if (getHeaders().length > 0) {
+            builder = builder.headers(getHeaders());
         }
         httpRequest = builder.build();
             try {

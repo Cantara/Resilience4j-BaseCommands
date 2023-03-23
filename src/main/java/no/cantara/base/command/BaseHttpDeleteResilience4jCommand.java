@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -26,13 +27,33 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
         this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT);
     }
 
+
+    /**
+     * @param baseUri  URI to run get from
+     * @param groupKey group your commands into logical entities for monitoring
+     * @param extraHeaders  add extra http headers to the command
+     */
+    protected BaseHttpDeleteResilience4jCommand(URI baseUri, String groupKey, Map<String,String> extraHeaders) {
+        this(baseUri, groupKey, BaseCommand.DEFAULT_TIMEOUT, extraHeaders);
+    }
+
     /**
      * @param baseUri  URI to run get from
      * @param groupKey group your commands into logical entities for monitoring
      * @param timeout  timeout in milliseconds.
      */
     protected BaseHttpDeleteResilience4jCommand(URI baseUri, String groupKey, int timeout) {
-        super(baseUri, groupKey, timeout);
+        this(baseUri, groupKey, timeout, null);
+    }
+
+    /**
+     * @param baseUri  URI to run get from
+     * @param groupKey group your commands into logical entities for monitoring
+     * @param timeout  timeout in milliseconds.
+     * @param extraHeaders  add extra http headers to the command
+     */
+    protected BaseHttpDeleteResilience4jCommand(URI baseUri, String groupKey, int timeout, Map<String,String> extraHeaders) {
+        super(baseUri, groupKey, timeout, extraHeaders);
         client = HttpClient.newBuilder().build();
         initializeCircuitBreaker();
         this.baseUri = baseUri;
@@ -74,12 +95,14 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
     //Should we impose String body on HttpCommands?
     @Override
     protected HttpResponse<String> run() {
-        httpRequest = HttpRequest.newBuilder()
-                .header("Authorization", buildAuthorization())
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .DELETE()
-                .build();
-//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+                .DELETE();
+        if (getHeaders().length > 0) {
+            builder = builder.headers(getHeaders());
+        }
+        httpRequest = builder.build();
+
         try {
             log.info("URI: {}", buildUri());
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -88,10 +111,7 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
         } catch (InterruptedException e) {
             log.debug("Interupted when trying to get from {}. Reason {}", buildUri(), e.getMessage());
         }
-//            return null;
-//        });
 
-//        HttpResponse<String> response = decorated.apply(httpRequest);
         log.info("Response: {}", response);
         if (response != null && response instanceof HttpResponse) {
             log.info("Status: {}, Body: {}", response.statusCode(), response.body());
@@ -100,14 +120,17 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
 
     }
 
+
     @Override
     protected String getBody() {
-        httpRequest = HttpRequest.newBuilder()
-                .header("Authorization", buildAuthorization())
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
-                .GET()
-                .build();
-//        decorated = CircuitBreaker.decorateFunction(circuitBreaker, httpRequest -> {
+                .GET();
+        if (getHeaders().length > 0) {
+            builder = builder.headers(getHeaders());
+        }
+        httpRequest = builder.build();
+
         try {
             response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (IOException e) {
@@ -127,4 +150,6 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
     protected String buildAuthorization() {
         return "Bearer 12345";
     }
+
+
 }
