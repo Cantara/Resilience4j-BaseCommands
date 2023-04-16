@@ -1,5 +1,6 @@
 package no.cantara.base.command;
 
+import no.cantara.base.command.commands.InheritDeleteCommandForTesting;
 import no.cantara.base.command.commands.InheritGetCommandForTesting;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -17,15 +18,16 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class InheritGetCommandForTestingTest {
-    private static final Logger log = getLogger(InheritGetCommandForTestingTest.class);
+public class InheritDeleteCommandForTestingTest {
+    private static final Logger log = getLogger(InheritDeleteCommandForTestingTest.class);
     private CommandProxy commandProxy;
     private static ClientAndServer server;
 
@@ -44,18 +46,18 @@ public class InheritGetCommandForTestingTest {
     }
 
     @Test
-    public void getCommand() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
+    public void deleteCommand() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
         String id = "98765";
-        String path = format("/inherit-get-command-for-testing/%s", id);
+        String path = format("/inherit-delete-command-for-testing/%s", id);
 
         //Expect
-        createExpectationForGet(path, jsonBody(id));
+        createExpectationForDelete(path, jsonBody(id));
 
-        URI getFrom = URI.create(baseUrl());
-        log.info("Get from: {}", getFrom);
+        URI deleteUri = URI.create(baseUrl());
+        log.info("Delete from: {}", deleteUri);
         //Execute
-        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, "fake-token", id);
-        Object result = commandProxy.run(getCommand);
+        InheritDeleteCommandForTesting deleteCommand = new InheritDeleteCommandForTesting(deleteUri, "fake-token", id);
+        Object result = commandProxy.run(deleteCommand);
         assertNotNull(result);
         //Verify
         assertEquals(200, ((HttpResponse)result).statusCode());
@@ -63,36 +65,37 @@ public class InheritGetCommandForTestingTest {
 
 
     @Test
-    public void getCommand_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
+    public void deleteCommand_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
         String id = "98765";
-        String path = format("/inherit-get-command-for-testing/%s", id);
+        String path = format("/inherit-delete-command-for-testing/%s", id);
 
         //Expect
-        createExpectationForGet_withExtraHeaders(path, jsonBody(id));
+        createExpectationForDelete_withExtraHeaders(path, jsonBody(id));
 
-        URI getFrom = URI.create(baseUrl());
-        log.info("Get from: {}", getFrom);
+        URI deleteUri = URI.create(baseUrl());
+        log.info("Delete from: {}", deleteUri);
 
         // Extre headers we want to add to the request
         Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
 
         //Execute
-        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, "fake-token", id, extraHeaders);
-        Object result = commandProxy.run(getCommand);
+        InheritDeleteCommandForTesting deleteCommand = new InheritDeleteCommandForTesting(deleteUri, "fake-token", id, extraHeaders);
+        Object result = commandProxy.run(deleteCommand);
         assertNotNull(result);
         //Verify
         assertEquals(200, ((HttpResponse)result).statusCode());
         log.info("Response (extra headers): {}", ((HttpResponse<?>) result).body());
     }
 
-    private void createExpectationForGet(String path, String returnBody) {
+
+    private void createExpectationForDelete(String path, String returnBody) {
         new MockServerClient("127.0.0.1", 1080)
                 .when(
                         request()
-                                .withMethod("GET")
+                                .withMethod("DELETE")
                                 .withPath(path)
                                 .withHeaders(
-                                        new Header("Authorization", "Bearer fake-token")),
+                                    new Header("Authorization", "Bearer fake-token")),
                         exactly(1))
                 .respond(
                         response()
@@ -105,12 +108,11 @@ public class InheritGetCommandForTestingTest {
     }
 
 
-
-    private void createExpectationForGet_withExtraHeaders(String path, String returnBody) {
+    private void createExpectationForDelete_withExtraHeaders(String path, String returnBody) {
         new MockServerClient("127.0.0.1", 1080)
                 .when(
                         request()
-                                .withMethod("GET")
+                                .withMethod("DELETE")
                                 .withPath(path)
                                 .withHeaders(
                                         new Header("FDO_HEADER", "foo"),

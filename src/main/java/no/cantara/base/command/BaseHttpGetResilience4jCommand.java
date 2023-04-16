@@ -99,8 +99,8 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
                 .GET();
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
 
@@ -135,8 +135,8 @@ public class BaseHttpGetResilience4jCommand extends BaseResilience4jCommand {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
                 .GET();
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
 
