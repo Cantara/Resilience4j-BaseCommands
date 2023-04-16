@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.lang.String.format;
 import static org.junit.Assert.*;
@@ -45,16 +46,17 @@ public class InheritGetCommandForTestingTest {
 
     @Test
     public void getCommand() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
-        String id = "98765";
+        String token = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString();
         String path = format("/inherit-get-command-for-testing/%s", id);
 
         //Expect
-        createExpectationForGet(path, jsonBody(id));
+        createExpectationForGet(path, jsonBody(id), token);
 
         URI getFrom = URI.create(baseUrl());
         log.info("Get from: {}", getFrom);
         //Execute
-        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, "fake-token", id);
+        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, token, id);
         Object result = commandProxy.run(getCommand);
         assertNotNull(result);
         //Verify
@@ -64,11 +66,12 @@ public class InheritGetCommandForTestingTest {
 
     @Test
     public void getCommand_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
-        String id = "98765";
+        String token = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString();
         String path = format("/inherit-get-command-for-testing/%s", id);
 
         //Expect
-        createExpectationForGet_withExtraHeaders(path, jsonBody(id));
+        createExpectationForGet_withExtraHeaders(path, jsonBody(id), token);
 
         URI getFrom = URI.create(baseUrl());
         log.info("Get from: {}", getFrom);
@@ -77,7 +80,7 @@ public class InheritGetCommandForTestingTest {
         Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
 
         //Execute
-        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, "fake-token", id, extraHeaders);
+        InheritGetCommandForTesting getCommand = new InheritGetCommandForTesting(getFrom, token, id, extraHeaders);
         Object result = commandProxy.run(getCommand);
         assertNotNull(result);
         //Verify
@@ -85,14 +88,14 @@ public class InheritGetCommandForTestingTest {
         log.info("Response (extra headers): {}", ((HttpResponse<?>) result).body());
     }
 
-    private void createExpectationForGet(String path, String returnBody) {
+    private void createExpectationForGet(String path, String returnBody, String token) {
         new MockServerClient("127.0.0.1", 1080)
                 .when(
                         request()
                                 .withMethod("GET")
                                 .withPath(path)
                                 .withHeaders(
-                                        new Header("Authorization", "Bearer fake-token")),
+                                        new Header("Authorization", "Bearer "+token)),
                         exactly(1))
                 .respond(
                         response()
@@ -106,7 +109,7 @@ public class InheritGetCommandForTestingTest {
 
 
 
-    private void createExpectationForGet_withExtraHeaders(String path, String returnBody) {
+    private void createExpectationForGet_withExtraHeaders(String path, String returnBody, String token) {
         new MockServerClient("127.0.0.1", 1080)
                 .when(
                         request()
@@ -115,7 +118,7 @@ public class InheritGetCommandForTestingTest {
                                 .withHeaders(
                                         new Header("FDO_HEADER", "foo"),
                                         new Header("BAR_HEADER", "bar"),
-                                        new Header("Authorization", "Bearer fake-token")),
+                                        new Header("Authorization", "Bearer "+token)),
                         exactly(1))
                 .respond(
                         response()

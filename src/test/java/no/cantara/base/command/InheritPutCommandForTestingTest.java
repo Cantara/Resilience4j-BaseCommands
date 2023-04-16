@@ -49,13 +49,14 @@ public class InheritPutCommandForTestingTest {
 
     @Test
     public void successfullPut() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
-        String id = "98765";
+        String token = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString();
         String path = format("/inherit-put-command-for-testing/%s", id);
 
         String requestBody = jsonBody(id);
-        createExpectationPut(path, requestBody, id);
+        createExpectationPut(path, requestBody, id, token);
 
-        InheritPutCommandForTesting putCommand = new InheritPutCommandForTesting(URI.create(baseUrl()), "fake-token",id, requestBody);
+        InheritPutCommandForTesting putCommand = new InheritPutCommandForTesting(URI.create(baseUrl()), token,id, requestBody);
         HttpResponse<String> response = (HttpResponse<String>) commandProxy.run(putCommand);
         log.info("Response: {}", response);
 
@@ -66,14 +67,15 @@ public class InheritPutCommandForTestingTest {
 
     @Test
     public void successfullPost_withExtraHeaders() throws InterruptedException, UnsuccesfulStatusCodeException, IOException {
-        String id = "98765";
+        String token = UUID.randomUUID().toString();
+        String id = UUID.randomUUID().toString();
         String path = format("/inherit-put-command-for-testing/%s", id);
 
         String requestBody = jsonBody(id);
-        createExpectationPut_withExtraHeaders(path, requestBody, id);
+        createExpectationPut_withExtraHeaders(path, requestBody, id, token);
         Map<String,String> extraHeaders = Map.of("FDO_HEADER","foo","BAR_HEADER","bar");
 
-        InheritPutCommandForTesting putCommand = new InheritPutCommandForTesting(URI.create(baseUrl()), "fake-token",id, requestBody,extraHeaders);
+        InheritPutCommandForTesting putCommand = new InheritPutCommandForTesting(URI.create(baseUrl()), token,id, requestBody,extraHeaders);
         HttpResponse<String> response = (HttpResponse<String>) commandProxy.run(putCommand);
         log.info("Response (extra headers): {}", response);
 
@@ -82,7 +84,7 @@ public class InheritPutCommandForTestingTest {
         assertTrue(response.body().contains(id));
     }
 
-    private void createExpectationPut(String path, String requestBody, String id) {
+    private void createExpectationPut(String path, String requestBody, String id, String token) {
         new MockServerClient("127.0.0.1", 1081)
                 .when(
                         request()
@@ -90,7 +92,7 @@ public class InheritPutCommandForTestingTest {
                                 .withPath(path)
                                 .withHeaders(
                                         new Header("Content-Type", "application/json; charset=utf-8"),
-                                        new Header("Authorization", "Bearer fake-token"))
+                                        new Header("Authorization", "Bearer "+token))
                                 .withBody(exact(requestBody)),
                         exactly(1))
                 .respond(
@@ -102,7 +104,7 @@ public class InheritPutCommandForTestingTest {
                 );
     }
 
-    private void createExpectationPut_withExtraHeaders(String path, String requestBody, String id) {
+    private void createExpectationPut_withExtraHeaders(String path, String requestBody, String id, String token) {
         new MockServerClient("127.0.0.1", 1081)
                 .when(
                         request()
@@ -112,7 +114,7 @@ public class InheritPutCommandForTestingTest {
                                         new Header("Content-Type", "application/json; charset=utf-8"),
                                         new Header("FDO_HEADER", "foo"),
                                         new Header("BAR_HEADER", "bar"),
-                                        new Header("Authorization", "Bearer fake-token"))
+                                        new Header("Authorization", "Bearer "+token))
                                 .withBody(exact(requestBody)),
                         exactly(1))
                 .respond(
