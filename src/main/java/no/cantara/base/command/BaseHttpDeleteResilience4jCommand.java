@@ -98,8 +98,8 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
                 .DELETE();
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
 
@@ -126,8 +126,8 @@ public class BaseHttpDeleteResilience4jCommand extends BaseResilience4jCommand {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(buildUri())
                 .GET();
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
 

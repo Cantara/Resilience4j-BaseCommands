@@ -25,10 +25,6 @@ public abstract class BaseResilience4jCommand extends BaseHttpCommand {
 
     protected BaseResilience4jCommand(URI baseUri, String groupKey, int timeout) {
         super(baseUri, groupKey, timeout);
-        if (Objects.nonNull(buildAuthorization())) {
-            headers.add("Authorization");
-            headers.add(buildAuthorization());
-        }
         client = HttpClient.newBuilder().build();
         initializeCircuitBreaker();
     }
@@ -57,7 +53,12 @@ public abstract class BaseResilience4jCommand extends BaseHttpCommand {
 
     protected abstract String buildAuthorization();
 
-    protected String[] getHeaders() {
+    protected String[] getHeadersAsArray() {
+        // Add Auth header if not already done
+        if (Objects.nonNull(buildAuthorization()) && !headers.contains("Authorization")) {
+            headers.add("Authorization");
+            headers.add(buildAuthorization());
+        }
         return headers.toArray(new String[0]);
     }
 

@@ -30,8 +30,8 @@ public abstract class BaseHttpPutResilience4jCommand extends BaseResilience4jCom
                 .uri(buildUri())
                 .header("Content-Type", "application/json; charset=utf-8")
                 .PUT(HttpRequest.BodyPublishers.ofString(getBody()));
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
         try {

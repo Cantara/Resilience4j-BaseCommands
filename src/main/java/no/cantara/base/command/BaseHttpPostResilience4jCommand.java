@@ -31,8 +31,8 @@ public class BaseHttpPostResilience4jCommand extends BaseResilience4jCommand {
                 .uri(buildUri())
                 .header("Content-Type", "application/json; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(getBody()));
-        if (getHeaders().length > 0) {
-            builder = builder.headers(getHeaders());
+        if (getHeadersAsArray().length > 0) {
+            builder = builder.headers(getHeadersAsArray());
         }
         httpRequest = builder.build();
             try {
