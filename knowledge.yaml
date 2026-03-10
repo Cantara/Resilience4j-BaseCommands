@@ -1,0 +1,22 @@
+id: Resilience4j-BaseCommands
+name: Resilience4j Base Commands
+version: 0.6.1-SNAPSHOT
+description: |
+  Base command classes for HTTP service calls using Resilience4j circuit
+  breakers. Provides ready-to-extend command wrappers with configurable retry,
+  circuit-breaker, and timeout policies for resilient inter-service
+  communication.
+units:
+  - id: base-commands
+    name: Base Commands
+    type: library
+    description: BaseHttpGetResilience4jCommand and variants — extend to implement resilient calls.
+    path: src/main/java/no/cantara/resilience4j
+  - id: config
+    name: Configuration
+    type: component
+    description: Circuit-breaker, retry, and timeout policy configuration binding.
+  - id: metrics
+    name: Metrics
+    type: component
+    description: Resilience4j metrics integration — exposes circuit state and call statistics.
