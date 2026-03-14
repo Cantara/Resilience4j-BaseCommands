@@ -1,0 +1,152 @@
+name: cantara-resilience
+version: 1.0.0
+description: >
+  Cantara's circuit breaker and resilience libraries: Hystrix-BaseCommands (HTTP),
+  Hystrix-BaseJDBCCommands (JDBC), and Resilience4j-BaseCommands (modern replacement).
+  Covers base classes, extension patterns, configuration, fallback strategies, and the
+  migration path from Hystrix to Resilience4j.
+
+  Trigger phrases: "hystrix, circuit breaker, resilience4j, base command, fallback,
+  BaseHttpGetCommand, BaseHttpPostCommand, BaseJDBCCommand, resilient HTTP call,
+  retry policy, circuit open, timeout command, cantara resilience, fault isolation"
+
+context:
+  org: cantara
+  repos:
+    - /src/cantara/Hystrix-BaseCommands
+    - /src/cantara/Hystrix-BaseJDBCCommands
+    - /src/cantara/Resilience4j-BaseCommands
+
+related_skills:
+  - cantara-whydah             # Whydah services use Hystrix commands for inter-service calls
+  - whydah-sts-development     # STS uses Hystrix commands (CommandVerifyUserCredential etc.)
+  - cantara-stingray           # Stingray provides HTTP client utilities used alongside these
+
+instructions: |
+  ## Overview
+
+  Cantara provides three libraries for resilient inter-service communication using the
+  circuit breaker pattern. Hystrix-BaseCommands and Hystrix-BaseJDBCCommands are the
+  legacy Netflix Hystrix implementations. Resilience4j-BaseCommands is the modern
+  replacement.
+
+  All three follow the same design: abstract base classes that you extend to implement
+  specific service calls or database queries, inheriting circuit-breaking, timeouts, and
+  fallback behavior automatically.
+
+  ---
+
+  ## Hystrix-BaseCommands — HTTP Circuit Breakers (Legacy)
+
+  **Version:** 0.1.17-SNAPSHOT
+  **Package:** `no.cantara.hystrix`
+  **Path:** `/src/cantara/Hystrix-BaseCommands`
+
+  ### Base Classes
+  - **BaseHttpGetCommand** -- extend to wrap an HTTP GET call with circuit-breaking
+  - **BaseHttpPostCommand** -- extend to wrap an HTTP POST call with circuit-breaking
+
+  ### Key Features
+  - Configurable timeout, thread pool size, and circuit-breaker thresholds
+  - Fallback strategy: cached responses and safe defaults when circuit opens
+  - Used extensively in Whydah (e.g., `CommandVerifyUserCredential` in STS)
+
+  ### Extension Pattern
+  ```java
+  public class CommandGetUser extends BaseHttpGetCommand<String> {
+      public CommandGetUser(String serviceUrl, String userId) {
+          super(serviceUrl + "/user/" + userId, "user-service");
+      }
+
+      @Override
+      protected String dealWithFailedResponse(String responseBody, int statusCode) {
+          return null; // fallback value
+      }
+  }
+  // Usage: String result = new CommandGetUser(url, id).execute();
+  ```
+
+  ### Configuration
+  Hystrix command properties (via Hystrix/Archaius):
+  - `execution.isolation.thread.timeoutInMilliseconds` -- call timeout
+  - `circuitBreaker.requestVolumeThreshold` -- min requests before circuit evaluation
+  - `circuitBreaker.errorThresholdPercentage` -- error % to trip circuit
+  - `circuitBreaker.sleepWindowInMilliseconds` -- half-open retry interval
+
+  ---
+
+  ## Hystrix-BaseJDBCCommands — JDBC Circuit Breakers (Legacy)
+
+  **Version:** 0.1.28-SNAPSHOT
+  **Package:** `no.cantara.hystrix`
+  **Path:** `/src/cantara/Hystrix-BaseJDBCCommands`
+
+  ### Base Classes
+  - **BaseJDBCCommand** -- extend to wrap database queries with circuit-breaking
+
+  ### Key Features
+  - Fault isolation for database calls (prevents cascade failures)
+  - Connection pool integration -- manages and recycles JDBC connections within commands
+  - Cached fallback: returns last-known-good data when circuit opens
+
+  ### When to Use
+  Use when a service depends on a database that might become slow or unavailable.
+  Wrapping queries in Hystrix commands prevents one slow query from blocking the
+  entire service thread pool.
+
+  ---
+
+  ## Resilience4j-BaseCommands — Modern Replacement
+
+  **Version:** 0.6.1-SNAPSHOT
+  **Package:** `no.cantara.resilience4j`
+  **Path:** `/src/cantara/Resilience4j-BaseCommands`
+
+  ### Base Classes
+  - **BaseHttpGetResilience4jCommand** -- extend for resilient HTTP GET calls
+  - Additional variants for POST and other HTTP methods
+
+  ### Key Features
+  - Circuit-breaker, retry, and timeout policies (configurable per command)
+  - Metrics integration -- exposes circuit state and call statistics
+  - Lighter weight than Hystrix (no thread pool per command group)
+  - Functional composition (decorators) instead of command inheritance
+
+  ### Configuration
+  Resilience4j configuration properties:
+  - Circuit breaker: `failureRateThreshold`, `waitDurationInOpenState`, `slidingWindowSize`
+  - Retry: `maxAttempts`, `waitDuration`, `retryExceptions`
+  - Timeout: `timeoutDuration`
+
+  ---
+
+  ## Migration: Hystrix -> Resilience4j
+
+  Netflix Hystrix entered maintenance mode in 2018. New Cantara services should use
+  Resilience4j-BaseCommands. The migration path:
+
+  | Hystrix | Resilience4j |
+  |---------|-------------|
+  | `extends BaseHttpGetCommand<T>` | `extends BaseHttpGetResilience4jCommand<T>` |
+  | Thread pool isolation (heavy) | Semaphore isolation (lightweight) |
+  | Archaius config | Standard properties/YAML config |
+  | `HystrixCommand.execute()` | Decorator pattern with `CircuitBreaker.of()` |
+  | `getFallback()` override | Fallback function parameter |
+  | Dashboard via Hystrix Dashboard | Metrics via Micrometer/Actuator |
+
+  ### Migration Steps
+  1. Replace Maven dependency: `Hystrix-BaseCommands` -> `Resilience4j-BaseCommands`
+  2. Change base class: `BaseHttpGetCommand` -> `BaseHttpGetResilience4jCommand`
+  3. Move Hystrix config properties to Resilience4j equivalents
+  4. Replace `getFallback()` override with fallback function
+  5. Update metrics/monitoring to use Resilience4j metrics registry
+
+  ### Which Services Still Use Hystrix
+  - Whydah-SecurityTokenService (STS): all `Command*` classes in `user/authentication/commands/`
+  - Whydah-OAuth2Service: Hystrix dependency noted in CLAUDE.md
+  - Whydah-SSOLoginWebApp: via Admin-SDK calls
+  - Most legacy Cantara services
+
+  ### New Services Should Use
+  - Resilience4j-BaseCommands for HTTP resilience
+  - Or Xorcery's built-in reactive resilience for Xorcery-based services
