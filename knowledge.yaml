@@ -1,4 +1,4 @@
-kcp_version: "0.21"
+kcp_version: "0.26"
 updated: "2026-06-20"
 language: en
 license: "Apache-2.0"
@@ -26,20 +26,19 @@ units:
     type: library
     description: BaseHttpGetResilience4jCommand and variants — extend to implement resilient calls.
     path: src/main/java/no/cantara/resilience4j
-      content_hash:
-        algorithm: sha256
-        value: ""
   - id: config
     name: Configuration
     type: component
     description: Circuit-breaker, retry, and timeout policy configuration binding.
-      content_hash:
-        algorithm: sha256
-        value: ""
   - id: metrics
     name: Metrics
     type: component
     description: Resilience4j metrics integration — exposes circuit state and call statistics.
-      content_hash:
-        algorithm: sha256
-        value: ""
+
+# Serving Endpoint Binding (KCP SPEC v0.26 §3.12): authoritative manifest URL
+# and authorized MCP representative. Ignored by pre-0.26 verifiers.
+serving:
+  manifest:
+    - https://raw.githubusercontent.com/Cantara/Resilience4j-BaseCommands/master/knowledge.yaml
+  mcp:
+    - https://mcp.cantara.no/mcp
