@@ -10,7 +10,7 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 import org.slf4j.Logger;
 
-import javax.json.Json;
+import jakarta.json.Json;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpResponse;
